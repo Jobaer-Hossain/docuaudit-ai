@@ -4,36 +4,37 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 antialiased selection:bg-brand-500 selection:text-white;
+    @apply bg-slate-50 text-slate-900 antialiased selection:bg-brand-500 selection:text-white;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 }
 
-/* Custom scrollbars */
+/* Custom scrollbars for clean light UI */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(241, 245, 249, 0.8);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
+  background: rgba(148, 163, 184, 0.5);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.6);
+  background: rgba(100, 116, 139, 0.7);
 }
 
-@keyframes pulseGlow {
+@keyframes pulseGlowLight {
   0%, 100% {
-    box-shadow: 0 0 15px 3px rgba(239, 68, 68, 0.6), inset 0 0 10px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3), inset 0 0 10px rgba(239, 68, 68, 0.15);
   }
   50% {
-    box-shadow: 0 0 25px 6px rgba(239, 68, 68, 0.9), inset 0 0 15px rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.6), inset 0 0 14px rgba(239, 68, 68, 0.3);
   }
 }
 
 .box-highlight-pulse {
-  animation: pulseGlow 1.8s infinite ease-in-out;
+  animation: pulseGlowLight 1.8s infinite ease-in-out;
 }

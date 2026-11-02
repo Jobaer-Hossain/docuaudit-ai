@@ -46,7 +46,6 @@ export const App: React.FC = () => {
   const [isReAuditing, setIsReAuditing] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load documents on mount
   useEffect(() => {
     loadDocumentList();
   }, []);
@@ -63,7 +62,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Load document detail when docId changes
   useEffect(() => {
     if (!currentDocId) return;
     loadDetail(currentDocId);
@@ -87,7 +85,6 @@ export const App: React.FC = () => {
     setCurrentPage(page);
     setFocusedBbox(bbox);
 
-    // Clear spotlight after 4.5 seconds
     setTimeout(() => {
       setFocusedBbox(null);
     }, 4500);
@@ -122,7 +119,6 @@ export const App: React.FC = () => {
     try {
       const res = await updateFindingStatus(currentDocDetail.metadata.id, findingId, status, notes);
       
-      // Update local state smoothly
       setCurrentDocDetail((prev) => {
         if (!prev) return prev;
         return {
@@ -168,24 +164,24 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen w-screen bg-slate-100/70 text-slate-900 overflow-hidden font-sans">
       {/* Top Navbar */}
-      <header className="h-14 border-b border-slate-800 bg-slate-950/90 px-6 flex items-center justify-between z-30 shrink-0 backdrop-blur">
-        {/* Brand & Mission Badge */}
+      <header className="h-14 border-b border-slate-200 bg-white px-6 flex items-center justify-between z-30 shrink-0 shadow-xs">
+        {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-sky-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white shadow-sm">
             <ShieldCheck className="w-5 h-5 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-bold text-base tracking-tight text-white">
-                DocuAudit <span className="text-brand-400 font-semibold">Pro</span>
+              <h1 className="font-bold text-sm tracking-tight text-slate-900">
+                DocuAudit <span className="text-brand-600 font-semibold">Pro</span>
               </h1>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700 font-medium">
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-700 border border-slate-200 font-medium">
                 Enterprise Compliance
               </span>
             </div>
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-slate-500">
               Financial & Legal Audit Verification Platform
             </p>
           </div>
@@ -197,7 +193,7 @@ export const App: React.FC = () => {
             <select
               value={currentDocId}
               onChange={(e) => setCurrentDocId(e.target.value)}
-              className="appearance-none bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 pr-8 focus:outline-none focus:border-brand-500 transition-colors cursor-pointer"
+              className="appearance-none bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-800 text-xs rounded-lg px-3 py-1.5 pr-8 focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600 transition-colors cursor-pointer shadow-xs font-medium"
             >
               {documents.map((doc) => (
                 <option key={doc.id} value={doc.id}>
@@ -205,12 +201,12 @@ export const App: React.FC = () => {
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           <button
             onClick={() => setIsUploadingOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-brand-600/20 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-medium shadow-xs transition-colors"
           >
             <UploadCloud className="w-3.5 h-3.5" />
             <span>Upload Document</span>
@@ -219,14 +215,14 @@ export const App: React.FC = () => {
 
         {/* Right Status Badges */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-300">
-            <Lock className="w-3 h-3 text-emerald-400" />
-            <span>Cryptographic Integrity Active</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-mono text-slate-700">
+            <Lock className="w-3 h-3 text-emerald-600" />
+            <span>SHA-256 Integrity Verified</span>
           </div>
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-900/80 text-[11px] font-mono text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>Multi-Agent Engine Online</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-mono text-emerald-700">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>Engine Ready</span>
           </div>
         </div>
       </header>
@@ -236,9 +232,9 @@ export const App: React.FC = () => {
         {/* Left Pane: Interactive Document Canvas Viewer (58%) */}
         <div className="w-[58%] h-full flex flex-col">
           {loading || !currentDocDetail ? (
-            <div className="flex flex-col items-center justify-center h-full bg-slate-900 border border-slate-800 rounded-xl">
-              <Loader2 className="w-7 h-7 text-brand-400 animate-spin mb-2" />
-              <span className="text-xs text-slate-400 font-mono">
+            <div className="flex flex-col items-center justify-center h-full bg-white border border-slate-200 rounded-xl shadow-xs">
+              <Loader2 className="w-7 h-7 text-brand-600 animate-spin mb-2" />
+              <span className="text-xs text-slate-500 font-mono">
                 Loading document layout & spatial tokens...
               </span>
             </div>
@@ -254,22 +250,22 @@ export const App: React.FC = () => {
         </div>
 
         {/* Right Pane: Autonomous Intelligence Studio Tabs (42%) */}
-        <div className="w-[42%] h-full flex flex-col bg-slate-900/40 rounded-xl overflow-hidden border border-slate-800">
+        <div className="w-[42%] h-full flex flex-col bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm">
           {/* Studio Tab Bar */}
-          <div className="flex items-center justify-between p-1.5 bg-slate-950/80 border-b border-slate-800">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between p-1.5 bg-slate-50 border-b border-slate-200">
+            <div className="flex items-center gap-1 bg-slate-200/60 p-0.5 rounded-lg border border-slate-200/80">
               <button
                 onClick={() => setActiveTab('audit')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                   activeTab === 'audit'
-                    ? 'bg-slate-800 text-brand-400 border border-slate-700 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200/60'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <AlertOctagon className="w-3.5 h-3.5" />
+                <AlertOctagon className="w-3.5 h-3.5 text-red-500" />
                 <span>Audit Findings</span>
                 {currentDocDetail && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-red-500/20 text-red-300 font-mono">
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-red-100 text-red-700 font-mono font-bold">
                     {currentDocDetail.findings.length}
                   </span>
                 )}
@@ -277,35 +273,35 @@ export const App: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('recon')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                   activeTab === 'recon'
-                    ? 'bg-slate-800 text-brand-400 border border-slate-700 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200/60'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <GitCompare className="w-3.5 h-3.5" />
+                <GitCompare className="w-3.5 h-3.5 text-brand-600" />
                 <span>3-Way Reconciliation</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('chat')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                   activeTab === 'chat'
-                    ? 'bg-slate-800 text-brand-400 border border-slate-700 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-white text-slate-900 shadow-xs border border-slate-200/60'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <MessageSquare className="w-3.5 h-3.5" />
+                <MessageSquare className="w-3.5 h-3.5 text-brand-600" />
                 <span>Audit Q&A</span>
               </button>
             </div>
           </div>
 
           {/* Active Studio Content */}
-          <div className="flex-1 overflow-hidden p-1">
+          <div className="flex-1 overflow-hidden p-1 bg-white">
             {loading || !currentDocDetail ? (
               <div className="flex items-center justify-center h-full">
-                <span className="text-xs text-slate-500 font-mono">Loading document telemetry...</span>
+                <span className="text-xs text-slate-400 font-mono">Loading document telemetry...</span>
               </div>
             ) : (
               <>
