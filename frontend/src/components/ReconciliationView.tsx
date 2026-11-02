@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   GitCompare, 
   CheckCircle2, 
   AlertTriangle, 
-  ArrowRight, 
-  DollarSign, 
   ShieldAlert,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Download,
+  Filter
 } from 'lucide-react';
 import { DocumentDetail } from '../types';
 
@@ -15,6 +15,7 @@ interface ReconciliationViewProps {
 }
 
 export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ document }) => {
+  const [filterDiscrepanciesOnly, setFilterDiscrepanciesOnly] = useState(false);
   const recon = document.reconciliation_data;
 
   if (!recon) {
@@ -28,6 +29,31 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ document
       </div>
     );
   }
+
+  const items = recon.items_comparison || [];
+  const displayItems = filterDiscrepanciesOnly ? items.filter((i: any) => !i.match) : items;
+
+  const exportCSV = () => {
+    const headers = ['Item Description', 'PO Qty', 'Invoiced Qty', 'PO Rate ($)', 'Invoiced Rate ($)', 'Status', 'Audit Exception'];
+    const rows = items.map((i: any) => [
+      `"${i.item}"`,
+      i.po_qty,
+      i.inv_qty,
+      i.po_rate,
+      i.inv_rate,
+      i.match ? 'MATCHED' : 'DISCREPANCY',
+      `"${i.issue || 'None'}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = window.document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `reconciliation_${recon.po_reference}_${recon.invoice_reference}.csv`);
+    window.document.body.appendChild(link);
+    link.click();
+    window.document.body.removeChild(link);
+  };
 
   return (
     <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
@@ -57,7 +83,7 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ document
         </div>
 
         {/* Budget Comparison Bar */}
-        <div className="grid grid-cols-2 gap-3 bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs">
+        <div className="grid grid-cols-2 gap-3 bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs mb-3">
           <div>
             <span className="text-[10px] text-slate-400 block uppercase font-mono">Approved PO Budget</span>
             <span className="text-base font-bold text-emerald-400 font-mono">
@@ -71,17 +97,40 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ document
             </span>
           </div>
         </div>
+
+        {/* Action Bar */}
+        <div className="flex items-center justify-between text-xs pt-1">
+          <button
+            onClick={() => setFilterDiscrepanciesOnly(!filterDiscrepanciesOnly)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-colors ${
+              filterDiscrepanciesOnly
+                ? 'bg-red-500/20 border-red-500/40 text-red-300 font-bold'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Filter className="w-3.5 h-3.5" />
+            <span>{filterDiscrepanciesOnly ? 'Showing Discrepancies Only' : 'Show Discrepancies Only'}</span>
+          </button>
+
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-medium transition-colors"
+          >
+            <Download className="w-3.5 h-3.5 text-brand-400" />
+            <span>Export CSV</span>
+          </button>
+        </div>
       </div>
 
       {/* Comparison Table */}
       <div className="flex-1 overflow-auto p-4">
         <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-1.5">
           <FileSpreadsheet className="w-4 h-4 text-brand-400" />
-          Line-by-Line Item Matching
+          Line-by-Line Item Matching ({displayItems.length})
         </h4>
 
         <div className="space-y-3">
-          {recon.items_comparison?.map((item: any, idx: number) => {
+          {displayItems.map((item: any, idx: number) => {
             const isMatch = item.match;
 
             return (
@@ -142,14 +191,14 @@ export const ReconciliationView: React.FC<ReconciliationViewProps> = ({ document
           })}
         </div>
 
-        {/* Audit Advice Card */}
+        {/* Audit Directive Card */}
         <div className="mt-4 p-4 rounded-xl bg-amber-950/30 border border-amber-900/70 text-xs text-amber-200 space-y-1">
           <div className="flex items-center gap-2 font-bold text-amber-300">
             <ShieldAlert className="w-4 h-4" />
-            <span>Autonomous Audit Directive: Payment Hold Recommended</span>
+            <span>Autonomous Audit Directive: Payment Hold Active</span>
           </div>
           <p className="text-[11px] text-amber-200/80 leading-relaxed">
-            Due to the +$7,436.00 variance and arithmetic inflation on line item 3, automated disbursement has been locked. Issue credit memo request #CR-8941 to Apex Datacenter before settlement.
+            Due to the +$7,436.00 variance and arithmetic inflation on line item 3, automated disbursement has been locked. Issue credit memo request to Apex Datacenter before settlement.
           </p>
         </div>
       </div>

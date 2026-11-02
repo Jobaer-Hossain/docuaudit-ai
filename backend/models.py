@@ -17,6 +17,14 @@ class DocumentElement(BaseModel):
     confidence: float = 0.98
     meta: Dict[str, Any] = Field(default_factory=dict)
 
+class FindingRemediation(BaseModel):
+    action_type: Literal["REDLINE_CLAUSE", "MATH_ADJUSTMENT", "SIGNATURE_ESCALATION", "DISPUTE_NOTICE"]
+    title: str
+    original_text: str
+    proposed_remediation: str
+    rationale: str
+    risk_reduction_pct: int = 90
+
 class AuditFinding(BaseModel):
     id: str
     severity: Literal["CRITICAL", "WARNING", "INFO", "VERIFIED"]
@@ -38,7 +46,9 @@ class AuditFinding(BaseModel):
     audit_rule: str
     citation_evidence: str
     confidence_score: float = 0.95
-    status: Literal["FLAGGED", "RESOLVED", "ACCEPTED"] = "FLAGGED"
+    status: Literal["FLAGGED", "RESOLVED", "ACCEPTED_EXCEPTION"] = "FLAGGED"
+    auditor_notes: Optional[str] = None
+    remediation: Optional[FindingRemediation] = None
 
 class Citation(BaseModel):
     id: str
@@ -59,6 +69,13 @@ class ChatResponse(BaseModel):
     reasoning_steps: List[str]
     hallucination_check_passed: bool
 
+class IntegrityRecord(BaseModel):
+    document_sha256: str
+    audit_trail_sha256: str
+    integrity_status: Literal["VERIFIED_INTACT", "TAMPER_DETECTED"]
+    sealed_at: str
+    verified_elements_count: int
+
 class DocumentMetadata(BaseModel):
     id: str
     title: str
@@ -70,6 +87,7 @@ class DocumentMetadata(BaseModel):
     critical_issues: int
     warnings: int
     status: str
+    sha256_hash: Optional[str] = None
 
 class DocumentDetail(BaseModel):
     metadata: DocumentMetadata
@@ -78,4 +96,9 @@ class DocumentDetail(BaseModel):
     findings: List[AuditFinding]
     summary: str
     metrics: Dict[str, Any]
+    integrity: Optional[IntegrityRecord] = None
     reconciliation_data: Optional[Dict[str, Any]] = None
+
+class StatusUpdateRequest(BaseModel):
+    status: Literal["FLAGGED", "RESOLVED", "ACCEPTED_EXCEPTION"]
+    notes: Optional[str] = None

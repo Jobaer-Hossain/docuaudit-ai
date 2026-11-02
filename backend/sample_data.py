@@ -1,5 +1,18 @@
+import hashlib
 from typing import Dict, Any, List
-from models import DocumentDetail, DocumentMetadata, DocumentElement, AuditFinding, BoundingBox
+from models import (
+    DocumentDetail,
+    DocumentMetadata,
+    DocumentElement,
+    AuditFinding,
+    BoundingBox,
+    FindingRemediation,
+    IntegrityRecord
+)
+
+def compute_element_hash(elements: List[DocumentElement]) -> str:
+    concat_text = "".join([f"{e.id}:{e.text}:{e.page}" for e in elements])
+    return hashlib.sha256(concat_text.encode("utf-8")).hexdigest()
 
 SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
     "inv-2026-8941": DocumentDetail(
@@ -13,7 +26,8 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
             health_score=48,
             critical_issues=3,
             warnings=2,
-            status="CRITICAL_RISK"
+            status="CRITICAL_RISK",
+            sha256_hash="8f92a17cb25e4028bc74e92a488b0a991823dcf49b398687a2df6e59cba70412"
         ),
         summary="Audit failed 4 automated policy checks. Identified $4,436.00 in arithmetic overcharges, an inverted payment due date paradox, and an unexecuted CFO approval signature.",
         metrics={
@@ -24,8 +38,18 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
             "claimed_total": "$42,500.00",
             "audited_true_total": "$38,064.00",
             "discrepancy_amount": "+$4,436.00 (Overcharge)",
-            "compliance_status": "Non-Compliant (SOX Violation)"
+            "compliance_status": "Non-Compliant (SOX Section 404 Block)",
+            "arithmetic_score": 45,
+            "legal_score": 85,
+            "auth_score": 30
         },
+        integrity=IntegrityRecord(
+            document_sha256="8f92a17cb25e4028bc74e92a488b0a991823dcf49b398687a2df6e59cba70412",
+            audit_trail_sha256="4d71e21b850937a04870f0559ebf02e5bcfd600600a94379a008cb0ff2084c68",
+            integrity_status="VERIFIED_INTACT",
+            sealed_at="2026-11-01 14:22:05 UTC",
+            verified_elements_count=13
+        ),
         pages_content=[
             {
                 "page": 1,
@@ -136,7 +160,7 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
                 bbox=BoundingBox(ymin=530, xmin=450, ymax=575, xmax=750),
                 text="TOTAL AMOUNT PAYABLE: $42,500.00 USD",
                 confidence=0.99,
-                meta={"anomaly": "tax_total_mismatch", "expected": "$41,064.00 (with original subtotal) or $38,064.00 (with audited subtotal)"}
+                meta={"anomaly": "tax_total_mismatch", "expected": "$38,064.00"}
             ),
             DocumentElement(
                 id="p1-el-notes",
@@ -205,7 +229,16 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
                 audit_rule="RULE-FIN-01: Line Item Quantity × Unit Price must match stated Subtotal within ±$0.01 tolerance.",
                 citation_evidence="Page 1, Row 3: '03 | Dedicated GPU Node H100 | 4 | $2,450.00 | $12,800.00'",
                 confidence_score=0.99,
-                status="FLAGGED"
+                status="FLAGGED",
+                auditor_notes="Confirmed mathematical error in vendor billing template. Credit memo required.",
+                remediation=FindingRemediation(
+                    action_type="MATH_ADJUSTMENT",
+                    title="Correct Line Item 03 & Issue Dispute Credit Memo",
+                    original_text="03 | Dedicated GPU Node H100 | 4 | $2,450.00 | $12,800.00",
+                    proposed_remediation="03 | Dedicated GPU Node H100 | 4 | $2,450.00 | $9,800.00 (Credit Adjustment -$3,000.00)",
+                    rationale="Enforces exact mathematical billing contract rates. Recovers $3,000.00 unauthorized overbill.",
+                    risk_reduction_pct=100
+                )
             ),
             AuditFinding(
                 id="find-tax-1",
@@ -213,14 +246,22 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
                 category="TAX_DISCREPANCY",
                 title="Grand Total Summation Mismatch (Hidden Charge)",
                 description="The Stated Subtotal ($34,800.00) + 18% VAT ($6,264.00) equals $41,064.00. However, Grand Total is stated as $42,500.00. There is an unaccounted discrepancy of $1,436.00.",
-                expected_value="$41,064.00 (or $38,064.00 if audited line items used)",
+                expected_value="$41,064.00 (or $38,064.00 with audited GPU line)",
                 actual_value="$42,500.00",
                 page_number=1,
                 bounding_box=BoundingBox(ymin=530, xmin=450, ymax=575, xmax=750),
                 audit_rule="RULE-FIN-02: Total Amount Payable must mathematically equal Subtotal + Taxes - Discounts.",
                 citation_evidence="Page 1, Bottom Right: 'Claimed Net: $34,800.00' + 'VAT (18%): $6,264.00' -> 'TOTAL AMOUNT PAYABLE: $42,500.00'",
                 confidence_score=0.99,
-                status="FLAGGED"
+                status="FLAGGED",
+                remediation=FindingRemediation(
+                    action_type="MATH_ADJUSTMENT",
+                    title="Recalculate Net Subtotal and True Tax Total",
+                    original_text="TOTAL AMOUNT PAYABLE: $42,500.00 USD",
+                    proposed_remediation="TOTAL AUDITED PAYABLE: $38,064.00 USD (Net: $31,800.00 + VAT: $6,264.00)",
+                    rationale="Eliminates the phantom $1,436.00 surcharge and incorporates the Line 03 correction.",
+                    risk_reduction_pct=100
+                )
             ),
             AuditFinding(
                 id="find-sig-1",
@@ -235,7 +276,15 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
                 audit_rule="RULE-COMPL-04: Disbursement threshold >= $25k requires dual cryptographic sign-off.",
                 citation_evidence="Page 2, Box 2: 'Digital Signature: [UNSIGNED - PENDING CFO AUTHORIZATION]'",
                 confidence_score=0.98,
-                status="FLAGGED"
+                status="FLAGGED",
+                remediation=FindingRemediation(
+                    action_type="SIGNATURE_ESCALATION",
+                    title="Trigger Executive Approval Workflow to CFO",
+                    original_text="Digital Signature: [UNSIGNED - PENDING CFO AUTHORIZATION]",
+                    proposed_remediation="Dispatch automated authorization packet with corrected total ($38,064.00) to CFO Inbox.",
+                    rationale="Ensures SOX 404 internal financial control compliance before wire transmission.",
+                    risk_reduction_pct=95
+                )
             ),
             AuditFinding(
                 id="find-date-1",
@@ -250,7 +299,15 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
                 audit_rule="RULE-PROC-09: Due Date must be chronologically progressive relative to Issue Date.",
                 citation_evidence="Page 1, Header: 'Date: 2026-11-12 | Due Date: 2026-11-02 (PAST DUE)'",
                 confidence_score=0.97,
-                status="FLAGGED"
+                status="FLAGGED",
+                remediation=FindingRemediation(
+                    action_type="DISPUTE_NOTICE",
+                    title="Amend Payment Due Date to Standard Net-30",
+                    original_text="Date: 2026-11-12 | Due Date: 2026-11-02",
+                    proposed_remediation="Date: 2026-11-12 | Due Date: 2026-12-12 (Net-30 Standard Terms)",
+                    rationale="Avoids automated late penalty accruals triggered by vendor billing system glitch.",
+                    risk_reduction_pct=85
+                )
             ),
             AuditFinding(
                 id="find-ground-1",
@@ -265,7 +322,7 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
                 audit_rule="RULE-KYV-01: Know-Your-Vendor verification check.",
                 citation_evidence="Page 1, Header: 'APEX DATACENTER & CLOUD CORP'",
                 confidence_score=0.99,
-                status="ACCEPTED"
+                status="RESOLVED"
             )
         ],
         reconciliation_data={
@@ -323,7 +380,8 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
             health_score=55,
             critical_issues=2,
             warnings=3,
-            status="HIGH_RISK"
+            status="HIGH_RISK",
+            sha256_hash="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         ),
         summary="Legal audit agent detected an Uncapped Consequential Damages liability clause (violating risk limits), an anomalous Foreign Arbitration seat, and an Asymmetric 24-Hour Termination clause.",
         metrics={
@@ -334,8 +392,18 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
             "liability_cap": "UNCAPPED (High Legal Exposure)",
             "jurisdiction": "Zurich, Switzerland (Anomalous for US entities)",
             "termination_notice": "24 Hours (Asymmetric Client Right)",
-            "compliance_status": "High Risk - Requires Redline"
+            "compliance_status": "High Risk - Redline Recommended",
+            "arithmetic_score": 100,
+            "legal_score": 42,
+            "auth_score": 95
         },
+        integrity=IntegrityRecord(
+            document_sha256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            audit_trail_sha256="7a66f019bb2c1b489a742880c514801127e997bc56191f6920f18d7efee26a11",
+            integrity_status="VERIFIED_INTACT",
+            sealed_at="2026-11-01 16:45:15 UTC",
+            verified_elements_count=8
+        ),
         pages_content=[
             {
                 "page": 1,
@@ -443,7 +511,15 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
                 audit_rule="RULE-LEGAL-01: Commercial contracts must include mutual liability caps and consequential damage disclaimers.",
                 citation_evidence="Page 2, Section 11.2: 'Contractor shall defend, indemnify... from ANY and ALL claims, lost profits... without financial cap or limitation whatsoever.'",
                 confidence_score=0.99,
-                status="FLAGGED"
+                status="FLAGGED",
+                remediation=FindingRemediation(
+                    action_type="REDLINE_CLAUSE",
+                    title="Insert Standard Mutual Consequential Damages Cap",
+                    original_text="Contractor shall defend, indemnify, and hold harmless Company from ANY and ALL claims, losses, lost profits, reputational harm, or indirect/consequential damages without financial cap or limitation whatsoever.",
+                    proposed_remediation="Except for gross negligence or willful misconduct, neither party shall be liable for indirect, incidental, or consequential damages. Each party's aggregate aggregate liability under this Agreement shall not exceed the total fees paid or payable by Company in the twelve (12) months preceding the claim.",
+                    rationale="Mitigates infinite balance-sheet exposure and restores market-standard mutual risk allocation.",
+                    risk_reduction_pct=95
+                )
             ),
             AuditFinding(
                 id="find-term-1",
@@ -458,7 +534,15 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
                 audit_rule="RULE-LEGAL-05: Termination for convenience must provide >= 30 calendar days notice with accrued compensation.",
                 citation_evidence="Page 2, Section 14.1: 'terminate immediately upon twenty-four (24) hours written notice... without penalty or payment for uncompleted milestone hours.'",
                 confidence_score=0.97,
-                status="FLAGGED"
+                status="FLAGGED",
+                remediation=FindingRemediation(
+                    action_type="REDLINE_CLAUSE",
+                    title="Amend Termination Notice to 30 Days with Pro-Rata Payment",
+                    original_text="Company may terminate this Agreement immediately upon twenty-four (24) hours written notice without penalty or payment for uncompleted milestone hours.",
+                    proposed_remediation="Either party may terminate this Agreement for convenience upon thirty (30) days prior written notice. Upon termination, Company shall pay Contractor for all authorized Services performed and non-cancelable expenses incurred up to the effective termination date.",
+                    rationale="Protects against abrupt cancellation and guarantees payment for completed engineering sprints.",
+                    risk_reduction_pct=90
+                )
             ),
             AuditFinding(
                 id="find-juris-1",
@@ -473,7 +557,15 @@ SAMPLE_DOCUMENTS: Dict[str, DocumentDetail] = {
                 audit_rule="RULE-GOV-02: Domestic US contracts should designate domestic governing law unless foreign parent company is involved.",
                 citation_evidence="Page 2, Section 18: 'substantive laws of the Canton of Zurich, Switzerland... Swiss Arbitration Centre in Zurich in the German language.'",
                 confidence_score=0.96,
-                status="FLAGGED"
+                status="FLAGGED",
+                remediation=FindingRemediation(
+                    action_type="REDLINE_CLAUSE",
+                    title="Designate Domestic Delaware Jurisdiction & English Arbitration",
+                    original_text="This Agreement shall be interpreted in accordance with the substantive laws of the Canton of Zurich, Switzerland, and disputes resolved via Swiss Arbitration Centre in Zurich in the German language.",
+                    proposed_remediation="This Agreement shall be governed by the laws of the State of Delaware, USA. Any dispute arising hereunder shall be finally settled by arbitration administered by the American Arbitration Association (AAA) in New York, NY, in the English language.",
+                    rationale="Drastically reduces legal overhead and standardizes dispute resolution for US corporate entities.",
+                    risk_reduction_pct=88
+                )
             )
         ]
     )

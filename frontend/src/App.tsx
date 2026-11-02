@@ -9,16 +9,27 @@ import {
   Sparkles, 
   CheckCircle2, 
   AlertOctagon,
-  ChevronDown
+  ChevronDown,
+  Lock,
+  FileWarning
 } from 'lucide-react';
-import { DocumentDetail, DocumentMetadata, BoundingBox, DocumentElement } from './types';
-import { fetchDocuments, fetchDocumentDetail, reAuditDocument } from './api';
+import { DocumentDetail, DocumentMetadata, BoundingBox, DocumentElement, AuditFinding } from './types';
+import { 
+  fetchDocuments, 
+  fetchDocumentDetail, 
+  reAuditDocument, 
+  updateFindingStatus, 
+  generateDisputeLetter,
+  verifyIntegrity 
+} from './api';
 import { DocumentViewer } from './components/DocumentViewer';
 import { AuditPanel } from './components/AuditPanel';
 import { ReconciliationView } from './components/ReconciliationView';
 import { AgentChat } from './components/AgentChat';
 import { UploadModal } from './components/UploadModal';
 import { AuditCertificateModal } from './components/AuditCertificateModal';
+import { RemediationModal } from './components/RemediationModal';
+import { DisputeMemoModal } from './components/DisputeMemoModal';
 
 export const App: React.FC = () => {
   const [documents, setDocuments] = useState<DocumentMetadata[]>([]);
@@ -30,6 +41,8 @@ export const App: React.FC = () => {
   
   const [isUploadingOpen, setIsUploadingOpen] = useState(false);
   const [isCertOpen, setIsCertOpen] = useState(false);
+  const [remediationFinding, setRemediationFinding] = useState<AuditFinding | null>(null);
+  const [disputeLetterMarkdown, setDisputeLetterMarkdown] = useState<string | null>(null);
   const [isReAuditing, setIsReAuditing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -82,7 +95,6 @@ export const App: React.FC = () => {
 
   const handleSelectBboxElement = (el: DocumentElement) => {
     setFocusedBbox(el.bbox);
-    // Switch to audit tab if clicking an element with anomaly
     if (el.meta?.anomaly) {
       setActiveTab('audit');
     }
@@ -101,6 +113,52 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleUpdateFindingStatus = async (
+    findingId: string, 
+    status: 'FLAGGED' | 'RESOLVED' | 'ACCEPTED_EXCEPTION',
+    notes?: string
+  ) => {
+    if (!currentDocDetail) return;
+    try {
+      const res = await updateFindingStatus(currentDocDetail.metadata.id, findingId, status, notes);
+      
+      // Update local state smoothly
+      setCurrentDocDetail((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          metadata: {
+            ...prev.metadata,
+            health_score: res.health_score,
+            critical_issues: res.critical_issues,
+            warnings: res.warnings,
+          },
+          findings: prev.findings.map((f) => 
+            f.id === findingId 
+              ? { ...f, status: status, auditor_notes: notes || f.auditor_notes } 
+              : f
+          )
+        };
+      });
+    } catch (err) {
+      console.error('Failed to update status:', err);
+    }
+  };
+
+  const handleApplyRemediation = async (findingId: string, notes: string) => {
+    await handleUpdateFindingStatus(findingId, 'RESOLVED', notes);
+  };
+
+  const handleGenerateDispute = async () => {
+    if (!currentDocDetail) return;
+    try {
+      const res = await generateDisputeLetter(currentDocDetail.metadata.id);
+      setDisputeLetterMarkdown(res.letter_markdown);
+    } catch (err) {
+      console.error('Failed to generate dispute letter:', err);
+    }
+  };
+
   const handleDocumentUploaded = (newDoc: DocumentDetail) => {
     setDocuments((prev) => [newDoc.metadata, ...prev]);
     setCurrentDocId(newDoc.metadata.id);
@@ -115,7 +173,7 @@ export const App: React.FC = () => {
       <header className="h-14 border-b border-slate-800 bg-slate-950/90 px-6 flex items-center justify-between z-30 shrink-0 backdrop-blur">
         {/* Brand & Mission Badge */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-sky-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
             <ShieldCheck className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -124,7 +182,7 @@ export const App: React.FC = () => {
                 DocuAudit <span className="text-brand-400">AI</span>
               </h1>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-brand-500/15 border border-brand-500/40 text-brand-300 font-bold">
-                v2.4 Grounded Multi-Modal
+                v2.5 Enterprise Studio
               </span>
             </div>
             <p className="text-[10px] text-slate-400">
@@ -159,18 +217,23 @@ export const App: React.FC = () => {
           </button>
         </div>
 
-        {/* Right Status */}
+        {/* Right Status Badges */}
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-300">
+            <Lock className="w-3 h-3 text-emerald-400" />
+            <span>Cryptographic Integrity Active</span>
+          </div>
+
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-900/80 text-[11px] font-mono text-emerald-400">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>Spatial Engine Connected</span>
+            <span>Multi-Agent Engine Online</span>
           </div>
         </div>
       </header>
 
       {/* Main Studio Split Layout */}
       <main className="flex-1 flex overflow-hidden p-3 gap-3">
-        {/* Left Pane: Interactive Document Canvas Viewer (60%) */}
+        {/* Left Pane: Interactive Document Canvas Viewer (58%) */}
         <div className="w-[58%] h-full flex flex-col">
           {loading || !currentDocDetail ? (
             <div className="flex flex-col items-center justify-center h-full bg-slate-900 border border-slate-800 rounded-xl">
@@ -253,6 +316,9 @@ export const App: React.FC = () => {
                     onReAudit={handleReAudit}
                     isReAuditing={isReAuditing}
                     onOpenCertificate={() => setIsCertOpen(true)}
+                    onOpenRemediation={(finding) => setRemediationFinding(finding)}
+                    onGenerateDisputeLetter={handleGenerateDispute}
+                    onUpdateFindingStatus={handleUpdateFindingStatus}
                   />
                 )}
 
@@ -284,6 +350,21 @@ export const App: React.FC = () => {
         <AuditCertificateModal
           document={currentDocDetail}
           onClose={() => setIsCertOpen(false)}
+        />
+      )}
+
+      {remediationFinding && (
+        <RemediationModal
+          finding={remediationFinding}
+          onClose={() => setRemediationFinding(null)}
+          onApplyRemediation={handleApplyRemediation}
+        />
+      )}
+
+      {disputeLetterMarkdown && (
+        <DisputeMemoModal
+          letterMarkdown={disputeLetterMarkdown}
+          onClose={() => setDisputeLetterMarkdown(null)}
         />
       )}
     </div>

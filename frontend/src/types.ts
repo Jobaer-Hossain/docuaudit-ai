@@ -15,6 +15,15 @@ export interface DocumentElement {
   meta?: Record<string, any>;
 }
 
+export interface FindingRemediation {
+  action_type: 'REDLINE_CLAUSE' | 'MATH_ADJUSTMENT' | 'SIGNATURE_ESCALATION' | 'DISPUTE_NOTICE';
+  title: string;
+  original_text: string;
+  proposed_remediation: string;
+  rationale: string;
+  risk_reduction_pct: number;
+}
+
 export interface AuditFinding {
   id: string;
   severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'VERIFIED';
@@ -28,7 +37,9 @@ export interface AuditFinding {
   audit_rule: string;
   citation_evidence: string;
   confidence_score: number;
-  status: 'FLAGGED' | 'RESOLVED' | 'ACCEPTED';
+  status: 'FLAGGED' | 'RESOLVED' | 'ACCEPTED_EXCEPTION';
+  auditor_notes?: string;
+  remediation?: FindingRemediation;
 }
 
 export interface Citation {
@@ -50,6 +61,14 @@ export interface ChatMessage {
   timestamp: string;
 }
 
+export interface IntegrityRecord {
+  document_sha256: string;
+  audit_trail_sha256: string;
+  integrity_status: 'VERIFIED_INTACT' | 'TAMPER_DETECTED';
+  sealed_at: string;
+  verified_elements_count: number;
+}
+
 export interface DocumentMetadata {
   id: string;
   title: string;
@@ -61,6 +80,7 @@ export interface DocumentMetadata {
   critical_issues: number;
   warnings: number;
   status: string;
+  sha256_hash?: string;
 }
 
 export interface PageContent {
@@ -77,6 +97,7 @@ export interface DocumentDetail {
   findings: AuditFinding[];
   summary: string;
   metrics: Record<string, any>;
+  integrity?: IntegrityRecord;
   reconciliation_data?: Record<string, any>;
 }
 
@@ -96,6 +117,7 @@ export interface AuditCertificate {
     expected?: string;
     actual?: string;
     page: number;
+    status?: string;
   }>;
   tamper_proof_hash: string;
 }
