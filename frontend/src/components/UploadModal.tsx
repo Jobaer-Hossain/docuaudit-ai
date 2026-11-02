@@ -54,8 +54,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onDocumentUpl
         <div className="flex items-center justify-between px-6 py-4 bg-slate-950 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <UploadCloud className="w-5 h-5 text-brand-400" />
-            <h3 className="font-bold text-slate-100 text-sm">
-              Upload Document for Autonomous Multi-Modal Audit
+            <h3 className="font-semibold text-slate-100 text-sm">
+              Upload Document for Verification
             </h3>
           </div>
           <button
@@ -103,7 +103,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, onDocumentUpl
             <div className="p-4 rounded-lg bg-slate-950 border border-brand-500/30 text-xs space-y-2">
               <div className="flex items-center gap-2 text-brand-400 font-semibold">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Autonomous Agent Pipeline Active</span>
+                <span>Verification Engine Active</span>
               </div>
               <p className="text-slate-400 font-mono text-[11px]">
                 {progressStage}

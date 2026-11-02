@@ -7,7 +7,6 @@ import {
   ChevronRight, 
   Eye, 
   EyeOff, 
-  Sparkles,
   AlertTriangle,
   CheckCircle2,
   FileText,
@@ -15,7 +14,9 @@ import {
   Maximize2,
   PanelLeftClose,
   PanelLeft,
-  X
+  X,
+  Crosshair,
+  Scan
 } from 'lucide-react';
 import { DocumentDetail, DocumentElement, BoundingBox } from '../types';
 
@@ -442,8 +443,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                       </div>
 
                       {isFocused && (
-                        <div className="absolute -top-6 right-1 bg-red-600 text-white font-bold px-2 py-0.5 rounded text-[10px] shadow-lg animate-bounce flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" /> AUDIT SPOTLIGHT
+                        <div className="absolute -top-6 right-1 bg-red-600 text-white font-bold px-2 py-0.5 rounded text-[10px] shadow-lg flex items-center gap-1">
+                          <Crosshair className="w-3 h-3" /> AUDIT SPOTLIGHT
                         </div>
                       )}
                     </div>
@@ -458,7 +459,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             <div className="fixed bottom-6 left-48 z-50 max-w-md bg-slate-900/95 border border-slate-700 rounded-xl p-3 shadow-2xl backdrop-blur text-xs animate-fadeIn">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-800 mb-2">
                 <span className="font-semibold text-slate-200 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-brand-400" />
+                  <Scan className="w-3.5 h-3.5 text-brand-400" />
                   Spatial Token Inspector
                 </span>
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-brand-300">

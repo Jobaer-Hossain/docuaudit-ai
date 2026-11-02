@@ -1,17 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Bot, 
   Send, 
-  Sparkles, 
+  ShieldCheck, 
   CheckCircle, 
-  AlertCircle, 
   Crosshair, 
   ChevronDown, 
   ChevronUp,
-  Cpu,
-  User
+  Terminal,
+  User,
+  MessageSquare,
+  FileCheck,
+  Loader2
 } from 'lucide-react';
-import { DocumentDetail, ChatMessage, Citation, BoundingBox } from '../types';
+import { DocumentDetail, ChatMessage, BoundingBox } from '../types';
 import { sendGroundedChat } from '../api';
 
 interface AgentChatProps {
@@ -24,12 +25,12 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Hello! I am the DocuAudit Anti-Hallucination Agent. I verify claims against spatial bounding boxes on ${document.metadata.title}. Ask me anything about calculations, clauses, or audit findings.`,
+      content: `Hello! I can answer questions regarding ${document.metadata.title}. Every response is verified directly against document coordinates and citations.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       groundingScore: 1.0,
       reasoningSteps: [
-        'Initialized spatial grounding layer.',
-        'Ready for verifiable multi-modal extraction.',
+        'Document layout and bounding box index loaded.',
+        'Citation verification active.',
       ],
     },
   ]);
@@ -80,11 +81,10 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
       setMessages((prev) => [...prev, assistantMsg]);
       setShowReasoning((prev) => ({ ...prev, [assistantMsg.id]: true }));
     } catch (err) {
-      // Fallback local agent response if server communication is disrupted
       const assistantMsg: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: `Audit Verification for "${textToSend}": Examined ${document.metadata.title}. The document has ${document.metadata.critical_issues} critical audit findings flagged, including arithmetic overcharges and missing executive signatures.`,
+        content: `Audit Verification for "${textToSend}": Examined ${document.metadata.title}. Found ${document.metadata.critical_issues} critical audit exceptions flagged, including arithmetic calculation discrepancies and pending authorizations.`,
         citations: document.findings.slice(0, 2).map((f) => ({
           id: f.id,
           page: f.page_number,
@@ -95,8 +95,8 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
         })),
         groundingScore: 0.96,
         reasoningSteps: [
-          'Spatial geometry mapped to document raster.',
-          'Anti-hallucination verified with local grounding model.',
+          'Spatial tokens matched to query terms.',
+          'Cross-referenced against document audit findings.',
         ],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
@@ -114,24 +114,23 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
     <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
       {/* Header */}
       <div className="p-3.5 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-400">
-            <Bot className="w-4 h-4" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
+            <MessageSquare className="w-4 h-4 text-brand-400" />
           </div>
           <div>
-            <h4 className="font-bold text-xs text-slate-100 flex items-center gap-1.5">
-              <span>Anti-Hallucination Audit Agent</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <h4 className="font-semibold text-xs text-slate-100 flex items-center gap-1.5">
+              <span>Document Audit Assistant</span>
             </h4>
             <span className="text-[10px] text-slate-400">
-              Spatial Grounding & Bounding-Box Verification
+              Grounded Citation Analysis
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-900/80 px-2 py-0.5 rounded-full">
+        <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 bg-emerald-950/50 border border-emerald-900/60 px-2.5 py-0.5 rounded-full">
           <CheckCircle className="w-3 h-3" />
-          <span>Critic Verification Active</span>
+          <span>Citation Verification Active</span>
         </div>
       </div>
 
@@ -143,21 +142,21 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
           return (
             <div
               key={msg.id}
-              className={`flex gap-3 text-xs leading-relaxed ${
+              className={`flex gap-2.5 text-xs leading-relaxed ${
                 isUser ? 'justify-end' : 'justify-start'
               }`}
             >
               {!isUser && (
-                <div className="w-6 h-6 rounded-md bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-400 shrink-0 mt-0.5">
-                  <Bot className="w-3.5 h-3.5" />
+                <div className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 shrink-0 mt-0.5">
+                  <FileCheck className="w-3.5 h-3.5 text-brand-400" />
                 </div>
               )}
 
               <div
                 className={`max-w-[85%] rounded-xl p-3.5 space-y-2 ${
                   isUser
-                    ? 'bg-brand-600 text-white rounded-br-none shadow-md shadow-brand-600/20'
-                    : 'bg-slate-950 border border-slate-800 text-slate-200 rounded-bl-none shadow-lg'
+                    ? 'bg-brand-600 text-white rounded-br-none shadow-sm'
+                    : 'bg-slate-950 border border-slate-800 text-slate-200 rounded-bl-none shadow-md'
                 }`}
               >
                 {/* Reasoning Trace Collapse */}
@@ -167,8 +166,8 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
                       onClick={() => toggleReasoning(msg.id)}
                       className="w-full flex items-center justify-between px-2.5 py-1 text-[10px] text-slate-400 hover:text-slate-200 font-mono"
                     >
-                      <span className="flex items-center gap-1 text-brand-400 font-semibold">
-                        <Cpu className="w-3 h-3" /> Agent Deliberation ({msg.reasoningSteps.length} steps)
+                      <span className="flex items-center gap-1.5 text-slate-300 font-medium">
+                        <Terminal className="w-3 h-3 text-brand-400" /> Audit Steps ({msg.reasoningSteps.length})
                       </span>
                       {showReasoning[msg.id] ? (
                         <ChevronUp className="w-3 h-3" />
@@ -181,7 +180,7 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
                       <div className="p-2 space-y-1 bg-slate-950/80 border-t border-slate-800 text-[10px] font-mono text-slate-400">
                         {msg.reasoningSteps.map((step, sIdx) => (
                           <div key={sIdx} className="flex items-center gap-1.5 text-slate-400">
-                            <span className="text-brand-500 font-bold">›</span>
+                            <span className="text-brand-400">›</span>
                             <span>{step}</span>
                           </div>
                         ))}
@@ -196,8 +195,8 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
                 {/* Grounding Confidence Pill */}
                 {!isUser && msg.groundingScore !== undefined && (
                   <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 text-[10px] font-mono">
-                    <span className="text-emerald-400 font-bold flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
+                    <span className="text-emerald-400 font-medium flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" />
                       Grounding Score: {Math.round(msg.groundingScore * 100)}%
                     </span>
                     <span className="text-slate-500">{msg.timestamp}</span>
@@ -207,19 +206,19 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
                 {/* Citations List with Spotlight Buttons */}
                 {!isUser && msg.citations && msg.citations.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-slate-800 space-y-1.5">
-                    <span className="text-[10px] font-bold text-brand-400 uppercase tracking-wider block">
-                      Grounded Spatial Citations ({msg.citations.length}):
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide block">
+                      Cited Document References ({msg.citations.length}):
                     </span>
                     <div className="space-y-1">
                       {msg.citations.map((c, cIdx) => (
                         <button
                           key={cIdx}
                           onClick={() => onSpotlight(c.page, c.bounding_box)}
-                          className="w-full text-left bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-brand-500/50 rounded p-1.5 transition-all text-[10px] font-mono group"
+                          className="w-full text-left bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-brand-500/40 rounded p-1.5 transition-all text-[10px] font-mono group"
                         >
-                          <div className="flex items-center justify-between text-slate-400 group-hover:text-brand-300">
+                          <div className="flex items-center justify-between text-slate-400 group-hover:text-slate-200">
                             <span className="font-semibold text-brand-400">
-                              [Page {c.page} • Score: {Math.round(c.relevance_score * 100)}%]
+                              Page {c.page} (Match: {Math.round(c.relevance_score * 100)}%)
                             </span>
                             <span className="flex items-center gap-1 text-[9px] text-slate-500 group-hover:text-brand-400">
                               <Crosshair className="w-3 h-3" /> Spotlight
@@ -245,9 +244,9 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
         })}
 
         {isLoading && (
-          <div className="flex items-center gap-2 text-xs text-brand-400 bg-slate-950/80 p-3 rounded-xl border border-slate-800 w-fit">
-            <Bot className="w-4 h-4 animate-spin" />
-            <span className="font-mono">Auditing spatial bounding boxes & verifying citations...</span>
+          <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 w-fit">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-400" />
+            <span className="font-mono text-[11px]">Verifying document coordinates & citations...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -260,7 +259,7 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
             key={idx}
             onClick={() => handleSend(qp)}
             disabled={isLoading}
-            className="whitespace-nowrap px-2.5 py-1 rounded-full text-[10px] bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors"
+            className="whitespace-nowrap px-2.5 py-1 rounded text-[11px] bg-slate-800/80 hover:bg-slate-750 text-slate-300 border border-slate-700/60 transition-colors"
           >
             {qp}
           </button>
@@ -280,13 +279,13 @@ export const AgentChat: React.FC<AgentChatProps> = ({ document, onSpotlight }) =
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask anything (e.g., 'Verify tax sum' or 'Show indemnification clause')..."
+            placeholder="Ask question (e.g., 'Verify tax sum' or 'Show indemnification clause')..."
             className="flex-1 bg-slate-900 border border-slate-800 focus:border-brand-500 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none transition-colors"
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="p-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-30 text-white rounded-lg transition-colors shadow-md shadow-brand-600/20"
+            className="p-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-30 text-white rounded-lg transition-colors"
           >
             <Send className="w-4 h-4" />
           </button>

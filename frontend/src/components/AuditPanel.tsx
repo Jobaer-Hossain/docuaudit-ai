@@ -7,7 +7,7 @@ import {
   RefreshCw, 
   Crosshair, 
   Award,
-  Wand2,
+  FileEdit,
   FileWarning,
   Lock,
   CheckCircle2,
@@ -297,10 +297,10 @@ export const AuditPanel: React.FC<AuditPanelProps> = ({
                   {finding.remediation && !isResolved && (
                     <button
                       onClick={() => onOpenRemediation(finding)}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded bg-brand-500/15 hover:bg-brand-500/25 border border-brand-500/40 text-brand-300 font-semibold text-[10px] transition-colors"
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 font-medium text-[10px] transition-colors"
                     >
-                      <Wand2 className="w-3 h-3 text-brand-400" />
-                      <span>Fix with AI Redline</span>
+                      <FileEdit className="w-3 h-3 text-brand-400" />
+                      <span>Review Redline</span>
                     </button>
                   )}
 

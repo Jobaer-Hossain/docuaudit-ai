@@ -3,10 +3,10 @@ import {
   ShieldCheck, 
   UploadCloud, 
   FileText, 
-  Bot, 
+  MessageSquare, 
   GitCompare, 
   Layers, 
-  Sparkles, 
+  Loader2, 
   CheckCircle2, 
   AlertOctagon,
   ChevronDown,
@@ -178,15 +178,15 @@ export const App: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-extrabold text-base tracking-tight text-white">
-                DocuAudit <span className="text-brand-400">AI</span>
+              <h1 className="font-bold text-base tracking-tight text-white">
+                DocuAudit <span className="text-brand-400 font-semibold">Pro</span>
               </h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-brand-500/15 border border-brand-500/40 text-brand-300 font-bold">
-                v2.5 Enterprise Studio
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700 font-medium">
+                Enterprise Compliance
               </span>
             </div>
             <p className="text-[10px] text-slate-400">
-              Autonomous Document Intelligence & Anti-Hallucination Audit Agent
+              Financial & Legal Audit Verification Platform
             </p>
           </div>
         </div>
@@ -237,9 +237,9 @@ export const App: React.FC = () => {
         <div className="w-[58%] h-full flex flex-col">
           {loading || !currentDocDetail ? (
             <div className="flex flex-col items-center justify-center h-full bg-slate-900 border border-slate-800 rounded-xl">
-              <Sparkles className="w-8 h-8 text-brand-400 animate-spin mb-2" />
+              <Loader2 className="w-7 h-7 text-brand-400 animate-spin mb-2" />
               <span className="text-xs text-slate-400 font-mono">
-                Extracting multi-modal layout & spatial coordinates...
+                Loading document layout & spatial tokens...
               </span>
             </div>
           ) : (
@@ -295,8 +295,8 @@ export const App: React.FC = () => {
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <Bot className="w-3.5 h-3.5" />
-                <span>Grounded Agent Chat</span>
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Audit Q&A</span>
               </button>
             </div>
           </div>
